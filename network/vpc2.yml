@@ -1,0 +1,66 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: "AWS CloudFormation Template for creating a VPC with 2 subnets, 1 public and 1 private"
+Resources:
+  EffulgencetechVPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+        - Key: name
+          Value: production 
+  EffulgencetechVPC_igw:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: stack
+        Value: production
+  EffulgencetechVPC_igw_attachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+       Ref: VPC
+      InternetGatewayId:
+       Ref: myInternetGateway
+  EffulgencetechVPCprivSN:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref EffulgencetechVPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: "us-east-1a"
+      Tags:
+      - Key: stack
+        Value: production
+  EffulgencetechVPCpubSN:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref EffulgencetechVPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: "us-east-1a"
+      Tags:
+      - Key: stack
+        Value: production 
+  EffulgencetechVPCpubSNRT:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref EffulgencetechVPC
+      Tags:
+      - Key: stack
+        Value: production 
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayToInternet
+    Properties:
+       RouteTableId:
+         Ref: EffulgencetechVPCpubSNRT
+       DestinationCidrBlock: 0.0.0.0/0
+       GatewayId: !Ref EffulgencetechVPC_igw
+  EffulgencetechVPCprivSNRT:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref EffulgencetechVPC
+      Tags:
+      - Key: stack
+        Value: production
+
