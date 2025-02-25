@@ -1,66 +1,107 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: "AWS CloudFormation Template for creating a VPC with 2 subnets, 1 public and 1 private"
+Description: AWS CloudFormation Template for creating a VPC with 2 subnets, 1
+  public and 1 private
+
+Parameters:
+  VpcCIDR:
+    Description: CIDR block for the VPC
+    Type: String
+    Default: 10.0.0.0/16
 Resources:
   EffulgencetechVPC:
-    Type: 'AWS::EC2::VPC'
+    Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: 10.0.0.0/16
+      CidrBlock: !Ref VpcCIDR 
       EnableDnsSupport: 'true'
       EnableDnsHostnames: 'true'
       Tags:
-        - Key: name
-          Value: production 
-  EffulgencetechVPC_igw:
+        - Key: Name
+          Value: production
+
+  EffulgencetechVPCigw:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
-      - Key: stack
-        Value: production
-  EffulgencetechVPC_igw_attachment:
+        - Key: Name
+          Value: production
+
+  EffulgencetechVPCigwattachment:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
-      VpcId:
-       Ref: VPC
-      InternetGatewayId:
-       Ref: myInternetGateway
+      VpcId: !Ref EffulgencetechVPC
+      InternetGatewayId: !Ref EffulgencetechVPCigw
   EffulgencetechVPCprivSN:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref EffulgencetechVPC
       CidrBlock: 10.0.1.0/24
-      AvailabilityZone: "us-east-1a"
+      AvailabilityZone: us-east-1a
       Tags:
-      - Key: stack
-        Value: production
+        - Key: stack
+          Value: production
+
   EffulgencetechVPCpubSN:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref EffulgencetechVPC
       CidrBlock: 10.0.2.0/24
-      AvailabilityZone: "us-east-1a"
+      AvailabilityZone: us-east-1a
       Tags:
-      - Key: stack
-        Value: production 
+        - Key: stack
+          Value: production
+
   EffulgencetechVPCpubSNRT:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref EffulgencetechVPC
       Tags:
-      - Key: stack
-        Value: production 
+        - Key: stack
+          Value: production
+
   PublicRoute:
     Type: AWS::EC2::Route
-    DependsOn: GatewayToInternet
     Properties:
-       RouteTableId:
-         Ref: EffulgencetechVPCpubSNRT
-       DestinationCidrBlock: 0.0.0.0/0
-       GatewayId: !Ref EffulgencetechVPC_igw
+      RouteTableId: !Ref EffulgencetechVPCpubSNRT
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref EffulgencetechVPCigw
+
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: EffulgencetechVPCpubSN
+      RouteTableId:
+        Ref: EffulgencetechVPCpubSNRT      
+
   EffulgencetechVPCprivSNRT:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref EffulgencetechVPC
       Tags:
-      - Key: stack
-        Value: production
+        - Key: stack
+          Value: production
 
+  PrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: EffulgencetechVPCprivSN
+      RouteTableId:
+        Ref: EffulgencetechVPCprivSNRT
+
+Outputs:
+  VPCID:
+    Value: !Ref EffulgencetechVPC
+    Description: VPC ID
+    Export:
+      Name: !Sub ${AWS::StackName}-EffulgencetechVPC
+  PublicSubnet:
+    Value: !Ref EffulgencetechVPCpubSN
+    Description: Public Subnet ID
+    Export:
+      Name: !Sub ${AWS::StackName}-EffulgencetechVPCpubSN
+  PrivateSubnet:
+    Value: !Ref EffulgencetechVPCprivSN
+    Description: Private Subnet ID
+    Export:
+      Name: !Sub ${AWS::StackName}-EffulgencetechVPCprivSN
